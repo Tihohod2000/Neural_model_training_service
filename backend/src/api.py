@@ -1,14 +1,24 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List, Union
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers as keras_layers
 import joblib
-from src.model import build_model_from_config 
+from src.model import build_model_from_config
 from src.schemas import *
 
 app = FastAPI(title="ML Prediction API")
+
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # В продакшене укажите конкретные origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = None
 scaler = None

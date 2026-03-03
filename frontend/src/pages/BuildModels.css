@@ -1,0 +1,282 @@
+.build-models-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.build-models-page h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+/* Визуализация нейронной сети */
+.network-visualization {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.network-svg {
+  width: 100%;
+  height: auto;
+}
+
+/* Нейроны */
+.neuron {
+  stroke-width: 3;
+  transition: all 0.3s ease;
+}
+
+.input-neuron {
+  fill: #4ade80;
+  stroke: #22c55e;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.hidden-neuron {
+  fill: #60a5fa;
+  stroke: #3b82f6;
+  animation: pulse-blue 2s ease-in-out infinite;
+}
+
+.output-neuron {
+  fill: #f87171;
+  stroke: #ef4444;
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+.neuron-group {
+  animation: neuron-appear 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.neuron-label {
+  fill: #fff;
+  font-size: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  opacity: 0.8;
+}
+
+.layer-label {
+  fill: #9ca3af;
+  font-size: 12px;
+  font-family: 'Segoe UI', sans-serif;
+  white-space: pre;
+}
+
+/* Связи между нейронами */
+.connection {
+  stroke: rgba(96, 165, 250, 0.3);
+  stroke-width: 1;
+  fill: none;
+  animation: signal-flow 1.5s ease-in-out infinite;
+}
+
+/* Анимации */
+@keyframes pulse-green {
+  0%, 100% {
+    r: 12;
+    filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.5));
+  }
+  50% {
+    r: 14;
+    filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.8));
+  }
+}
+
+@keyframes pulse-blue {
+  0%, 100% {
+    r: 12;
+    filter: drop-shadow(0 0 5px rgba(96, 165, 250, 0.5));
+  }
+  50% {
+    r: 14;
+    filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.8));
+  }
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    r: 12;
+    filter: drop-shadow(0 0 5px rgba(248, 113, 113, 0.5));
+  }
+  50% {
+    r: 14;
+    filter: drop-shadow(0 0 15px rgba(248, 113, 113, 0.8));
+  }
+}
+
+@keyframes signal-flow {
+  0% {
+    stroke: rgba(96, 165, 250, 0.2);
+    stroke-width: 1;
+  }
+  50% {
+    stroke: rgba(96, 165, 250, 0.6);
+    stroke-width: 2;
+  }
+  100% {
+    stroke: rgba(96, 165, 250, 0.2);
+    stroke-width: 1;
+  }
+}
+
+@keyframes neuron-appear {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Форма */
+form {
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.form-group input[type="number"] {
+  max-width: 200px;
+}
+
+.layer-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.layer-row select,
+.layer-row input {
+  flex: 1;
+  padding: 8px 12px;
+}
+
+.layer-row input[type="number"] {
+  max-width: 80px;
+}
+
+.layer-row button {
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.layer-row button:hover {
+  background: #dc2626;
+}
+
+button[type="button"] {
+  padding: 10px 20px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-right: 10px;
+}
+
+button[type="button"]:hover {
+  background: #4b5563;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+button[type="submit"]:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Результат и ошибка */
+.result,
+.error {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.result {
+  background: #d1fae5;
+  border: 2px solid #6ee7b7;
+  color: #065f46;
+}
+
+.error {
+  background: #fee2e2;
+  border: 2px solid #fca5a5;
+  color: #991b1b;
+}
+
+.result h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.result pre {
+  background: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 13px;
+}
