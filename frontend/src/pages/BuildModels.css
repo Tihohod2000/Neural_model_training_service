@@ -23,6 +23,7 @@
 .network-svg {
   width: 100%;
   height: auto;
+  display: block;
 }
 
 /* Нейроны */
@@ -68,6 +69,14 @@
   white-space: pre;
 }
 
+.ellipsis-label,
+.more-indicator {
+  fill: #6b7280;
+  font-size: 24px;
+  font-family: 'Segoe UI', sans-serif;
+  letter-spacing: 2px;
+}
+
 /* Связи между нейронами */
 .connection {
   stroke: rgba(96, 165, 250, 0.3);
@@ -79,33 +88,33 @@
 /* Анимации */
 @keyframes pulse-green {
   0%, 100% {
-    r: 12;
+    r: 10;
     filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.5));
   }
   50% {
-    r: 14;
+    r: 11;
     filter: drop-shadow(0 0 15px rgba(74, 222, 128, 0.8));
   }
 }
 
 @keyframes pulse-blue {
   0%, 100% {
-    r: 12;
+    r: 10;
     filter: drop-shadow(0 0 5px rgba(96, 165, 250, 0.5));
   }
   50% {
-    r: 14;
+    r: 11;
     filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.8));
   }
 }
 
 @keyframes pulse-red {
   0%, 100% {
-    r: 12;
+    r: 10;
     filter: drop-shadow(0 0 5px rgba(248, 113, 113, 0.5));
   }
   50% {
-    r: 14;
+    r: 11;
     filter: drop-shadow(0 0 15px rgba(248, 113, 113, 0.8));
   }
 }
