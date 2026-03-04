@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "./BuildModels.css";
 import ManualModelCreation from "../components/BuildModels/ManualModelCreation";
+import LoadingAndCreatingModel from "../components/BuildModels/LoadingAndCreatingModel";
 
 function BuildModels() {
   const [inputDim, setInputDim] = useState(10);
@@ -16,6 +17,7 @@ function BuildModels() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [currentPages, setCurrentPages] = useState(0);
+  const [csvFile, setCsvFile] = useState(null);
 
   const networkStructure = useMemo(() => {
     const structure = [inputDim];
@@ -120,15 +122,10 @@ function BuildModels() {
           result={result}
         />
       ) : (
-        <div>
-          Тут будет загрузка CSV и выборка столбцов для обучения и верных ответов
-        </div>
+        <LoadingAndCreatingModel
+          onFileLoaded={(file) => setCsvFile(file)}
+        />
       )}
-
-
-
-
-
 
     </div>
   );
