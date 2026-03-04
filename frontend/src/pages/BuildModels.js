@@ -74,12 +74,40 @@ function BuildModels() {
       if (!response.ok) {
         const errData = await response.json();
         throw new Error(errData.detail || `Ошибка: ${response.status}`);
-      } else {
-        alert("Модель создана!!!")
       }
 
       const data = await response.json();
       setResult(data);
+      alert("Модель создана!!!");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCsvUpload = async (file) => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/uploadCSV", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || `Ошибка: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+      alert("Файл успешно загружен!");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -123,7 +151,10 @@ function BuildModels() {
         />
       ) : (
         <LoadingAndCreatingModel
-          onFileLoaded={(file) => setCsvFile(file)}
+          onFileLoaded={handleCsvUpload}
+          loading={loading}
+          error={error}
+          result={result}
         />
       )}
 

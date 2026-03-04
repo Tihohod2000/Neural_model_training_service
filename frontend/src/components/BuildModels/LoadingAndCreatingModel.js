@@ -1,26 +1,23 @@
 import React, { useState } from "react";
 import "./LoadingAndCreatingModel.css";
 
-function LoadingAndCreatingModel({ onFileLoaded }) {
+function LoadingAndCreatingModel({ onFileLoaded, loading, error, result }) {
   const [file, setFile] = useState(null);
-  const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
 
   const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1 ГБ в байтах
 
   const handleFile = (selectedFile) => {
-    setError(null);
-
     if (!selectedFile) return;
 
     if (selectedFile.type !== "text/csv" && !selectedFile.name.endsWith(".csv")) {
-      setError("Пожалуйста, загрузите файл формата CSV");
+      alert("Пожалуйста, загрузите файл формата CSV");
       setFile(null);
       return;
     }
 
     if (selectedFile.size > MAX_FILE_SIZE) {
-      setError("Размер файла не должен превышать 1 ГБ");
+      alert("Размер файла не должен превышать 1 ГБ");
       setFile(null);
       return;
     }
@@ -91,7 +88,14 @@ function LoadingAndCreatingModel({ onFileLoaded }) {
           <div className="upload-icon">📁</div>
           <p>Перетащите CSV файл сюда</p>
           <p>или</p>
-          <button type="button" className="select-file-btn">
+          <button
+            type="button"
+            className="select-file-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("csv-file-input").click();
+            }}
+          >
             Выбрать файл
           </button>
           <p className="file-size-limit">Максимальный размер: 1 ГБ</p>
@@ -116,11 +120,14 @@ function LoadingAndCreatingModel({ onFileLoaded }) {
 
       {error && <div className="error-message">{error}</div>}
 
-      {file && (
+      {result && (
         <div className="next-step">
-          <p>Файл готов к обработке</p>
+          <p>Файл успешно загружен: {result.filename}</p>
+          <p>Размер: {result.size_mb} МБ</p>
         </div>
       )}
+
+      {loading && <div className="loading">Загрузка...</div>}
     </div>
   );
 }

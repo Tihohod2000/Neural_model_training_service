@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List, Union
@@ -8,6 +8,7 @@ from tensorflow.keras import layers as keras_layers
 import joblib
 from src.model import build_model_from_config
 from src.schemas import *
+import os
 
 app = FastAPI(title="ML Prediction API")
 
@@ -19,6 +20,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Максимальный размер файла: 1 ГБ
+MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1 GB в байтах
+UPLOAD_DIR = "uploads"
+
+# Создаём директорию для загрузок, если не существует
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 model = None
 scaler = None
@@ -76,8 +84,50 @@ async def create_model(params: ModelParameters):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    
-    
+@app.post("/uploadCSV")
+async def upload_csv(file: UploadFile = File(...)):
+    """Загрузка CSV файла на сервер (макс. 1 ГБ)."""
+    try:
+        # Проверка расширения файла
+        if not file.filename.endswith(".csv"):
+            raise HTTPException(
+                status_code=400,
+                detail="Неверный формат файла. Загрузите файл с расширением .csv"
+            )
+
+        # Чтение файла в память для проверки размера
+        contents = await file.read()
+        file_size = len(contents)
+
+        # Проверка размера файла
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Файл слишком большой. Максимальный размер: 1 ГБ. Размер файла: {file_size / (1024 * 1024 * 1024):.2f} ГБ"
+            )
+
+        if file_size == 0:
+            raise HTTPException(status_code=400, detail="Файл пуст")
+
+        # Сохранение файла на сервер
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(contents)
+
+        return {
+            "message": "Файл успешно загружен",
+            "filename": file.filename,
+            "size_bytes": file_size,
+            "size_mb": round(file_size / (1024 * 1024), 2),
+            "path": file_path
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при загрузке файла: {str(e)}")
+
+
 @app.post("/makemodel")
 async def makemodel():
     return "model was made"
