@@ -1,10 +1,6 @@
 import React, { useState, useMemo } from "react";
 import "./BuildModels.css";
-import NetworkVisualization from "../components/BuildModels/NetworkVisualization";
-import LayerConfig from "../components/BuildModels/LayerConfig";
-import OptimizerConfig from "../components/BuildModels/OptimizerConfig";
-import MetricsConfig from "../components/BuildModels/MetricsConfig";
-import ResultDisplay from "../components/BuildModels/ResultDisplay";
+import ManualModelCreation from "../components/BuildModels/ManualModelCreation";
 
 function BuildModels() {
   const [inputDim, setInputDim] = useState(10);
@@ -19,6 +15,7 @@ function BuildModels() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [currentPages, setCurrentPages] = useState(0);
 
   const networkStructure = useMemo(() => {
     const structure = [inputDim];
@@ -91,45 +88,48 @@ function BuildModels() {
   return (
     <div className="build-models-page">
       <h1>Создание нейронной модели</h1>
+      <div className="SelectConfigMaker">
+        <button onClick={() => setCurrentPages(0)}>
+          Создать вручную
+        </button>
+        <button onClick={() => setCurrentPages(1)}>
+          Создать на основе CSV
+        </button>
+      </div>
 
-      <NetworkVisualization networkStructure={networkStructure} layers={layers} />
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Размерность входа (input_dim):</label>
-          <input
-            type="number"
-            value={inputDim}
-            onChange={(e) => setInputDim(parseInt(e.target.value) || 0)}
-            min="1"
-            required
-          />
-        </div>
-
-        <LayerConfig
+      {currentPages === 0 ? (
+        <ManualModelCreation
+          networkStructure={networkStructure}
           layers={layers}
+          inputDim={inputDim}
+          setInputDim={setInputDim}
           addLayer={addLayer}
           removeLayer={removeLayer}
           updateLayer={updateLayer}
-        />
-
-        <OptimizerConfig
           optimizer={optimizer}
           setOptimizer={setOptimizer}
           learningRate={learningRate}
           setLearningRate={setLearningRate}
           loss={loss}
           setLoss={setLoss}
+          metrics={metrics}
+          setMetrics={setMetrics}
+          handleSubmit={handleSubmit}
+          loading={loading}
+          error={error}
+          result={result}
         />
+      ) : (
+        <div>
+          Тут будет загрузка CSV и выборка столбцов для обучения и верных ответов
+        </div>
+      )}
 
-        <MetricsConfig metrics={metrics} setMetrics={setMetrics} />
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Создание..." : "Создать модель"}
-        </button>
-      </form>
 
-      <ResultDisplay error={error} result={result} />
+
+
+
     </div>
   );
 }
