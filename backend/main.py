@@ -19,6 +19,9 @@ def main(use_synthetic: bool = True):
     else:
         X_train, X_test, y_train, y_test = load_data("data/dataset.csv")
 
+    # Сохраняем сырые данные для теста финальной модели
+    X_test_raw = X_test.copy()
+
     # 2. Препроцессинг
     X_train, X_test, scaler = scale_data(X_train, X_test)
 
@@ -34,6 +37,10 @@ def main(use_synthetic: bool = True):
 
     # 6. Сохранение модели с нормализацией
     finishModel = save_model(scaler)
+
+    # 7. Тест модели с нормализацией на сырых данных
+    print("\n=== Тест модели с нормализацией на сырых данных ===")
+    evaluate_model(finishModel, X_test_raw, y_test)
 
 
     
