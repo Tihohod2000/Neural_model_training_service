@@ -9,6 +9,8 @@ import joblib
 from src.model import build_model_from_config
 from src.schemas import *
 import os
+import pandas as pd
+import io
 
 app = FastAPI(title="ML Prediction API")
 
@@ -114,12 +116,17 @@ async def upload_csv(file: UploadFile = File(...)):
         with open(file_path, "wb") as f:
             f.write(contents)
 
+        # Чтение заголовков CSV
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')), nrows=0)
+        headers = list(df.columns)
+
         return {
             "message": "Файл успешно загружен",
             "filename": file.filename,
             "size_bytes": file_size,
             "size_mb": round(file_size / (1024 * 1024), 2),
-            "path": file_path
+            "path": file_path,
+            "headers": headers
         }
 
     except HTTPException:

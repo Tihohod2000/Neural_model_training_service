@@ -1,9 +1,9 @@
 import React from "react";
-import NetworkVisualization from "./NetworkVisualization";
-import LayerConfig from "./LayerConfig";
-import OptimizerConfig from "./OptimizerConfig";
-import MetricsConfig from "./MetricsConfig";
-import ResultDisplay from "./ResultDisplay";
+import NetworkVisualization from "../components/BuildModels/NetworkVisualization";
+import LayerConfig from "../components/BuildModels/LayerConfig";
+import OptimizerConfig from "../components/BuildModels/OptimizerConfig";
+import MetricsConfig from "../components/BuildModels/MetricsConfig";
+import ResultDisplay from "../components/BuildModels/ResultDisplay";
 
 function ManualModelCreation({
   networkStructure,

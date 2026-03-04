@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import "./BuildModels.css";
-import ManualModelCreation from "../components/BuildModels/ManualModelCreation";
-import LoadingAndCreatingModel from "../components/BuildModels/LoadingAndCreatingModel";
+import ManualModelCreation from "./ManualModelCreation";
+import LoadingAndCreatingModel from "./LoadingAndCreatingModel";
 
 function BuildModels() {
   const [inputDim, setInputDim] = useState(10);
@@ -18,6 +18,10 @@ function BuildModels() {
   const [error, setError] = useState(null);
   const [currentPages, setCurrentPages] = useState(0);
   const [csvFile, setCsvFile] = useState(null);
+  const [selectedColumns, setSelectedColumns] = useState({
+    features: [],
+    target: null,
+  });
 
   const networkStructure = useMemo(() => {
     const structure = [inputDim];
@@ -115,6 +119,10 @@ function BuildModels() {
     }
   };
 
+  const handleColumnsSelected = (columns) => {
+    setSelectedColumns(columns);
+  };
+
   return (
     <div className="build-models-page">
       <h1>Создание нейронной модели</h1>
@@ -152,6 +160,7 @@ function BuildModels() {
       ) : (
         <LoadingAndCreatingModel
           onFileLoaded={handleCsvUpload}
+          onColumnsSelected={handleColumnsSelected}
           loading={loading}
           error={error}
           result={result}
