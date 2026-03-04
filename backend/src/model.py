@@ -68,7 +68,7 @@ def build_model_from_config(config):
     return model
 
 
-def build_model(input_dim: int):
+def build_defuelt_model(input_dim: int):
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
         layers.Dense(64, activation="relu"),
