@@ -16,7 +16,7 @@ function BuildModels() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [currentPages, setCurrentPages] = useState(0);
+  const [currentPages, setCurrentPages] = useState(1);
   const [csvFile, setCsvFile] = useState(null);
   const [selectedColumns, setSelectedColumns] = useState({
     features: [],
