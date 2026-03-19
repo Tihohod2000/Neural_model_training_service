@@ -14,14 +14,13 @@ function LoadingAndCreatingModel({
   error, 
   result, 
   file, 
-  setFile
+  setFile,
+  setCurrentPages,
+  inputDim,
+  setInputDim
 }) {
-  // const [file, setFile] = useState(null);
-  const [dragActive, setDragActive] = useState(false);
-  // const [headers, setHeaders] = useState([]);
-  // const [selectedFeatures, setSelectedFeatures] = useState([]);
-  // const [selectedTarget, setSelectedTarget] = useState(null);
 
+  const [dragActive, setDragActive] = useState(false);
   const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1 ГБ в байтах
 
   const handleFile = (selectedFile) => {
@@ -115,6 +114,7 @@ function LoadingAndCreatingModel({
       }
       return [...prev, header];
     });
+
   };
 
   const handleSelectAllFeatures = () => {
@@ -137,6 +137,7 @@ function LoadingAndCreatingModel({
       onColumnsSelected({
         features: selectedFeatures,
         target: selectedTarget,
+        inputDim: selectedFeatures.length,
       });
     }
   }, [selectedFeatures, selectedTarget]);
@@ -270,6 +271,7 @@ function LoadingAndCreatingModel({
           <button
             type="button"
             className="continue-btn"
+            onClick= {() => setCurrentPages(0)}
             disabled={selectedFeatures.length === 0 || !selectedTarget}
           >
             Продолжить обучение модели

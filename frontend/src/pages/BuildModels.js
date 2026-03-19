@@ -4,7 +4,7 @@ import ManualModelCreation from "./ManualModelCreation";
 import LoadingAndCreatingModel from "./LoadingAndCreatingModel";
 
 function BuildModels() {
-  const [inputDim, setInputDim] = useState(10);
+  const [inputDim, setInputDim] = useState(1);
   const [layers, setLayers] = useState([
     { type: "Dense", units: 64, activation: "relu" },
   ]);
@@ -127,6 +127,13 @@ function BuildModels() {
 
   const handleColumnsSelected = (columns) => {
     setSelectedColumns(columns);
+    if (columns.inputDim) {
+      setInputDim(columns.inputDim);
+      setLayers([
+    { type: "Dense", units: columns.inputDim, activation: "relu" },
+    { type: "Dense", units: columns.inputDim / 2, activation: "relu" },
+  ])
+    }
   };
 
   return (
