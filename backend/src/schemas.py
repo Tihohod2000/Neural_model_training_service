@@ -46,3 +46,9 @@ class BuildModelResponse(BaseModel):
     status: str
     input_dim: int
     layers_count: int
+
+
+class TrainingRequest(BaseModel):
+    file_name: str
+    selectedFeatures: List[str]
+    selectedTarget: str

@@ -1,3 +1,5 @@
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from config import EPOCHS, BATCH_SIZE, MODEL_PATH
 
@@ -21,3 +23,15 @@ def train_model(model, X_train, y_train):
     )
 
     return history
+
+
+def train_model_from_csv(model, csv_path, feature_columns, target_column):      
+    # Обучение модели
+    history, scaler = train_model_from_csv(
+        model=model,
+        csv_path=csv_path,
+        feature_columns=feature_columns,
+        target_column=target_column
+    )
+    
+    return history, scaler

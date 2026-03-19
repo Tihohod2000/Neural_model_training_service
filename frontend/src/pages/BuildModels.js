@@ -136,6 +136,38 @@ function BuildModels() {
     }
   };
 
+  const handleStartTraining = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/start-training", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          file_name: file?.name,
+          selectedFeatures: selectedColumns.features,
+          selectedTarget: selectedColumns.target,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || `Ошибка: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+      alert("Обучение начато!");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="build-models-page">
       <h1>Создание нейронной модели</h1>
@@ -166,6 +198,7 @@ function BuildModels() {
           metrics={metrics}
           setMetrics={setMetrics}
           handleSubmit={handleSubmit}
+          handleStartTraining={handleStartTraining}
           loading={loading}
           error={error}
           result={result}

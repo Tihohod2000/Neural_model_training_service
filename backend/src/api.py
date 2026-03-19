@@ -1,3 +1,4 @@
+from backend.src.saveModel import save_model
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,6 +8,7 @@ from tensorflow import keras
 from tensorflow.keras import layers as keras_layers
 import joblib
 from src.model import build_model_from_config
+from src.trainer import train_model_from_csv
 from src.schemas import *
 import os
 import pandas as pd
@@ -53,7 +55,43 @@ async def health_check():
     """Проверка доступности сервиса."""
     return {"status": "ok"}
 
+@app.post("/start-training")
+async def start_training(request: TrainingRequest):
+    """Начать обучение модели на загруженном CSV файле."""
+    global model, scaler
+    
+    if model is None:
+        raise HTTPException(status_code=400, detail="Модель не создана. Сначала создайте модель.")
+    
+    try:
+        # Путь к CSV файлу
+        csv_path = os.path.join(UPLOAD_DIR, request.file_name)
+        
+        if not os.path.exists(csv_path):
+            raise HTTPException(status_code=404, detail=f"Файл {request.file_name} не найден")
+        
+        history, scaler = train_model_from_csv(csv_path=csv_path, model=model, feature_columns=request.selectedFeatures, target_column=request.selectedTarget)
+        
+        # Сохранение скалера
+        # scaler_path = os.path.join("models", "scaler.pkl")
+        # joblib.dump(scaler, scaler_path)
 
+   
+
+    # 6. Сохранение модели с нормализацией
+        finishModel = save_model(scaler)
+        
+        return {
+            "message": "Обучение завершено",
+            "epochs_trained": len(history.history['loss']),
+            "final_loss": float(history.history['loss'][-1]),
+            "final_val_loss": float(history.history['val_loss'][-1]) if 'val_loss' in history.history else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при обучении: {str(e)}")
 
 
 @app.post("/predict", response_model=PredictionResponse)

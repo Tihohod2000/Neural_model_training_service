@@ -22,6 +22,7 @@ function ManualModelCreation({
   metrics,
   setMetrics,
   handleSubmit,
+  handleStartTraining,
   loading,
   error,
   result,
@@ -59,9 +60,15 @@ function ManualModelCreation({
 
         <MetricsConfig metrics={metrics} setMetrics={setMetrics} />
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Создание..." : "Создать модель"}
-        </button>
+        {!result ? (
+          <button type="submit" disabled={loading}>
+            {loading ? "Создание..." : "Создать модель"}
+          </button>
+        ) : (
+          <button type="button" className="start-training-btn" onClick={handleStartTraining} disabled={loading}>
+            {loading ? "Запуск..." : "Начать обучение"}
+          </button>
+        )}
       </form>
       <ResultDisplay error={error} result={result} />
     </div>
