@@ -19,7 +19,11 @@ function BuildModels() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [currentPages, setCurrentPages] = useState(1);
-  const [csvFile, setCsvFile] = useState(null);
+
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
+  const [selectedTarget, setSelectedTarget] = useState(null);
+  const [headers, setHeaders] = useState([]);
+  const [file, setFile] = useState(null);
   const [selectedColumns, setSelectedColumns] = useState({
     features: [],
     target: null,
@@ -162,6 +166,14 @@ function BuildModels() {
       ) : (
         <LoadingAndCreatingModel
           onFileLoaded={handleCsvUpload}
+          file={file}
+          setFile={setFile}
+          headers={headers}
+          setHeaders={setHeaders}
+          selectedFeatures={selectedFeatures}
+          setSelectedFeatures={setSelectedFeatures}
+          selectedTarget={selectedTarget}
+          setSelectedTarget={setSelectedTarget}
           onColumnsSelected={handleColumnsSelected}
           setCurrentPages={setCurrentPages}
           loading={loading}

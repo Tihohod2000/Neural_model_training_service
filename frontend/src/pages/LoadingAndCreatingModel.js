@@ -1,12 +1,26 @@
 import React, { useState } from "react";
 import "./LoadingAndCreatingModel.css";
 
-function LoadingAndCreatingModel({ onFileLoaded, onColumnsSelected, loading, error, result }) {
-  const [file, setFile] = useState(null);
+function LoadingAndCreatingModel({
+  selectedTarget, 
+  setSelectedTarget, 
+  selectedFeatures, 
+  setSelectedFeatures, 
+  headers, 
+  setHeaders, 
+  onFileLoaded, 
+  onColumnsSelected, 
+  loading, 
+  error, 
+  result, 
+  file, 
+  setFile
+}) {
+  // const [file, setFile] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  const [headers, setHeaders] = useState([]);
-  const [selectedFeatures, setSelectedFeatures] = useState([]);
-  const [selectedTarget, setSelectedTarget] = useState(null);
+  // const [headers, setHeaders] = useState([]);
+  // const [selectedFeatures, setSelectedFeatures] = useState([]);
+  // const [selectedTarget, setSelectedTarget] = useState(null);
 
   const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024; // 1 ГБ в байтах
 
@@ -113,6 +127,7 @@ function LoadingAndCreatingModel({ onFileLoaded, onColumnsSelected, loading, err
   };
 
   const handleTargetChange = (header) => {
+    handleDeselectAllFeatures()
     setSelectedTarget(header);
   };
 
