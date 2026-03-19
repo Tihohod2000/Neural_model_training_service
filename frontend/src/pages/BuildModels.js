@@ -8,6 +8,8 @@ function BuildModels() {
   const [layers, setLayers] = useState([
     { type: "Dense", units: 64, activation: "relu" },
   ]);
+
+  const [outLayer, setoutLayer] = useState(1)
   const [optimizer, setOptimizer] = useState("adam");
   const [learningRate, setLearningRate] = useState(0.001);
   const [loss, setLoss] = useState("binary_crossentropy");
@@ -30,7 +32,7 @@ function BuildModels() {
         structure.push(layer.units || 0);
       }
     });
-    structure.push(1);
+    structure.push(outLayer);
     return structure;
   }, [inputDim, layers]);
 
@@ -161,9 +163,12 @@ function BuildModels() {
         <LoadingAndCreatingModel
           onFileLoaded={handleCsvUpload}
           onColumnsSelected={handleColumnsSelected}
+          setCurrentPages={setCurrentPages}
           loading={loading}
           error={error}
           result={result}
+          inputDim={inputDim}
+          setInputDim={setInputDim}
         />
       )}
 

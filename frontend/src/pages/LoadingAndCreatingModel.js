@@ -104,7 +104,8 @@ function LoadingAndCreatingModel({ onFileLoaded, onColumnsSelected, loading, err
   };
 
   const handleSelectAllFeatures = () => {
-    setSelectedFeatures(headers);
+    // Исключаем целевую переменную из признаков
+    setSelectedFeatures(headers.filter((h) => h !== selectedTarget));
   };
 
   const handleDeselectAllFeatures = () => {
