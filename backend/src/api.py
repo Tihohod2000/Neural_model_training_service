@@ -1,8 +1,8 @@
-from backend.src.saveModel import save_model
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List, Union
+from src.saveModel import save_model
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers as keras_layers
@@ -36,18 +36,18 @@ model = None
 scaler = None
 
 
-
-
-
-
 @app.on_event("startup")
 async def load_model_and_scaler():
     """Загрузка модели и скалера при старте."""
     global model, scaler
-    model = keras.models.load_model("models/model.h5")
-    scaler = joblib.load("models/scaler.pkl")
-    print(f"Input_shape: {model.input_shape[1]}")
-    # print(model.summary())
+    try:
+        model = keras.models.load_model("models/model.h5")
+        scaler = joblib.load("models/scaler.pkl")
+        print(f"Input_shape: {model.input_shape[1]}")
+    except FileNotFoundError:
+        print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
+        model = None
+        scaler = None
 
 
 @app.get("/health")
@@ -56,38 +56,41 @@ async def health_check():
     return {"status": "ok"}
 
 @app.post("/start-training")
-async def start_training(request: TrainingRequest):
+async def start_training(request: ModelParametersAndTrainingRequest):
     """Начать обучение модели на загруженном CSV файле."""
     global model, scaler
-    
-    if model is None:
-        raise HTTPException(status_code=400, detail="Модель не создана. Сначала создайте модель.")
-    
+
     try:
+        # Создание модели с правильным input_dim
+        model = build_model_from_config(request.configModel)
+
         # Путь к CSV файлу
-        csv_path = os.path.join(UPLOAD_DIR, request.file_name)
-        
+        csv_path = os.path.join(UPLOAD_DIR, request.params.file_name)
+
         if not os.path.exists(csv_path):
-            raise HTTPException(status_code=404, detail=f"Файл {request.file_name} не найден")
-        
-        history, scaler = train_model_from_csv(csv_path=csv_path, model=model, feature_columns=request.selectedFeatures, target_column=request.selectedTarget)
-        
+            raise HTTPException(status_code=404, detail=f"Файл {request.params.file_name} не найден")
+
+        # Обучение модели
+        history, scaler = train_model_from_csv(
+            model=model,
+            csv_path=csv_path,
+            feature_columns=request.params.selectedFeatures,
+            target_column=request.params.selectedTarget
+        )
+
         # Сохранение скалера
         # scaler_path = os.path.join("models", "scaler.pkl")
         # joblib.dump(scaler, scaler_path)
 
-   
+        save_model(scaler)
 
-    # 6. Сохранение модели с нормализацией
-        finishModel = save_model(scaler)
-        
         return {
             "message": "Обучение завершено",
             "epochs_trained": len(history.history['loss']),
             "final_loss": float(history.history['loss'][-1]),
             "final_val_loss": float(history.history['val_loss'][-1]) if 'val_loss' in history.history else None
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -109,20 +112,20 @@ async def predict(request: PredictionRequest):
 
 
 @app.post("/create-model")
-async def create_model(params: ModelParameters):
-    global model
-    try:
-        model = build_model_from_config(params)
+# async def create_model(params: ModelParameters):
+#     global model
+#     try:
+#         model = build_model_from_config(params)
 
-        return {
-            "message": "Model created successfully",
-            "input_dim": params.input_dim,
-            "num_layers": len(params.layers),
-            "total_params": model.count_params()
-        }
+#         return {
+#             "message": "Model created successfully",
+#             "input_dim": params.input_dim,
+#             "num_layers": len(params.layers),
+#             "total_params": model.count_params()
+#         }
 
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
     
 @app.post("/uploadCSV")
 async def upload_csv(file: UploadFile = File(...)):

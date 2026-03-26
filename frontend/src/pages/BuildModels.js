@@ -55,8 +55,7 @@ function BuildModels() {
     setLayers(updated);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -141,15 +140,34 @@ function BuildModels() {
     setError(null);
 
     try {
+      if (!file?.name || !selectedColumns.features?.length || !selectedColumns.target) {
+        throw new Error("Нет данных для обучения. Загрузите CSV файл и выберите колонки.");
+      }
+
       const response = await fetch("/start-training", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          file_name: file?.name,
-          selectedFeatures: selectedColumns.features,
-          selectedTarget: selectedColumns.target,
+          configModel:{
+            input_dim: inputDim,
+            layers: layers,
+            compile: {
+              optimizer: {
+                type: optimizer,
+                learning_rate: learningRate,
+              },
+            loss: loss,
+            metrics: metrics,
+            },
+          },
+          params: {
+            file_name: file.name,
+            selectedFeatures: selectedColumns.features,
+            selectedTarget: selectedColumns.target,
+          }
+
         }),
       });
 
@@ -160,7 +178,7 @@ function BuildModels() {
 
       const data = await response.json();
       setResult(data);
-      alert("Обучение начато!");
+      alert("Обучение завершено!");
     } catch (err) {
       setError(err.message);
     } finally {
