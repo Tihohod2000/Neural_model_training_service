@@ -85,18 +85,18 @@ model = None
 scaler = None
 
 
-@app.on_event("startup")
-async def load_model_and_scaler():
-    """Загрузка модели и скалера при старте."""
-    global model, scaler
-    try:
-        model = keras.models.load_model("models/model.h5")
-        scaler = joblib.load("models/scaler.pkl")
-        print(f"Input_shape: {model.input_shape[1]}")
-    except FileNotFoundError:
-        print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
-        model = None
-        scaler = None
+# @app.on_event("startup")
+# async def load_model_and_scaler():
+#     """Загрузка модели и скалера при старте."""
+#     global model, scaler
+#     try:
+#         model = keras.models.load_model("models/model.h5")
+#         scaler = joblib.load("models/scaler.pkl")
+#         print(f"Input_shape: {model.input_shape[1]}")
+#     except FileNotFoundError:
+#         print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
+#         model = None
+#         scaler = None
 
 
 @app.get("/health")
@@ -242,6 +242,4 @@ async def upload_csv(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Ошибка при загрузке файла: {str(e)}")
 
 
-@app.post("/makemodel")
-async def makemodel():
-    return "model was made"
+
