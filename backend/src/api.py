@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List, Union
@@ -13,6 +14,9 @@ from src.schemas import *
 import os
 import pandas as pd
 import io
+import jwt
+import datetime
+from functools import wraps
 
 app = FastAPI(title="ML Prediction API")
 
@@ -24,6 +28,51 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# JWT конфигурация
+JWT_SECRET = "your-secret-key-change-in-production"  # Замените на безопасный ключ в продакшене
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+# Схема для авторизации
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+# HTTP Bearer схема
+security = HTTPBearer()
+
+# --- JWT функции ---
+
+def create_jwt_token(username: str) -> str:
+    """Создаёт JWT токен для указанного пользователя."""
+    payload = {
+        "sub": username,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRATION_HOURS),
+        "iat": datetime.datetime.utcnow()
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+
+def verify_jwt_token(token: str) -> dict:
+    """Проверяет валидность JWT токена и возвращает payload."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Токен истёк")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Неверный токен")
+
+
+def require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Зависимость FastAPI для проверки авторизации через JWT."""
+    return verify_jwt_token(credentials.credentials)
 
 # Максимальный размер файла: 1 ГБ
 MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1 GB в байтах
@@ -54,6 +103,23 @@ async def load_model_and_scaler():
 async def health_check():
     """Проверка доступности сервиса."""
     return {"status": "ok"}
+
+
+@app.post("/login", response_model=TokenResponse)
+async def login(request: LoginRequest):
+    """Аутентификация пользователя и выдача JWT токена."""
+    # TODO: Замените на реальную проверку учётных данных из БД
+    VALID_USERS = {
+        "admin": "admin123",
+        "user": "user123"
+    }
+
+    # print(request.username)
+    if request.username not in VALID_USERS or VALID_USERS[request.username] != request.password:
+        raise HTTPException(status_code=401, detail="Неверное имя пользователя или пароль")
+
+    token = create_jwt_token(request.username)
+    return {"access_token": token, "token_type": "bearer"}
 
 @app.post("/start-training")
 async def start_training(request: ModelParametersAndTrainingRequest):
