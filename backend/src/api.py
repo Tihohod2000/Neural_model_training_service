@@ -100,7 +100,7 @@ async def load_model_and_scaler():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check(user: dict = Depends(require_auth)):
     """Проверка доступности сервиса."""
     return {"status": "ok"}
 
