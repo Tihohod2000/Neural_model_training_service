@@ -2,18 +2,19 @@ import React, { useState } from "react";
 import "./LoadingAndCreatingModel.css";
 
 function LoadingAndCreatingModel({
-  selectedTarget, 
-  setSelectedTarget, 
-  selectedFeatures, 
-  setSelectedFeatures, 
-  headers, 
-  setHeaders, 
-  onFileLoaded, 
-  onColumnsSelected, 
-  loading, 
-  error, 
-  result, 
-  file, 
+  token,
+  selectedTarget,
+  setSelectedTarget,
+  selectedFeatures,
+  setSelectedFeatures,
+  headers,
+  setHeaders,
+  onFileLoaded,
+  onColumnsSelected,
+  loading,
+  error,
+  result,
+  file,
   setFile,
   setCurrentPages,
   inputDim,
@@ -51,6 +52,9 @@ function LoadingAndCreatingModel({
 
     fetch("/uploadCSV", {
       method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
       body: formData,
     })
       .then((response) => {
@@ -271,7 +275,7 @@ function LoadingAndCreatingModel({
           <button
             type="button"
             className="continue-btn"
-            onClick= {() => setCurrentPages(0)}
+            onClick={() => setCurrentPages(0)}
             disabled={selectedFeatures.length === 0 || !selectedTarget}
           >
             Продолжить обучение модели

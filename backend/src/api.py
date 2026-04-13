@@ -83,6 +83,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 model = None
 scaler = None
+VALID_USERS = {
+        "admin": "admin123",
+        "1": "1"
+    }
 
 
 # @app.on_event("startup")
@@ -109,10 +113,7 @@ async def health_check(user: dict = Depends(require_auth)):
 async def login(request: LoginRequest):
     """Аутентификация пользователя и выдача JWT токена."""
     # TODO: Замените на реальную проверку учётных данных из БД
-    VALID_USERS = {
-        "admin": "admin123",
-        "user": "user123"
-    }
+    global VALID_USERS 
 
     # print(request.username)
     if request.username not in VALID_USERS or VALID_USERS[request.username] != request.password:
@@ -121,8 +122,9 @@ async def login(request: LoginRequest):
     token = create_jwt_token(request.username)
     return {"access_token": token, "token_type": "bearer"}
 
+
 @app.post("/start-training")
-async def start_training(request: ModelParametersAndTrainingRequest):
+async def start_training(request: ModelParametersAndTrainingRequest, user: dict = Depends(require_auth)):
     """Начать обучение модели на загруженном CSV файле."""
     global model, scaler
 
@@ -194,7 +196,7 @@ async def predict(request: PredictionRequest):
 #         raise HTTPException(status_code=400, detail=str(e))
     
 @app.post("/uploadCSV")
-async def upload_csv(file: UploadFile = File(...)):
+async def upload_csv(file: UploadFile = File(...), user: dict = Depends(require_auth)):
     """Загрузка CSV файла на сервер (макс. 1 ГБ)."""
     try:
         # Проверка расширения файла

@@ -9,6 +9,7 @@ function BuildModels() {
     { type: "Dense", units: 64, activation: "relu" },
   ]);
 
+  const token = localStorage.getItem("token");
   const [outLayer, setoutLayer] = useState(1)
   const [optimizer, setOptimizer] = useState("adam");
   const [learningRate, setLearningRate] = useState(0.001);
@@ -65,6 +66,7 @@ function BuildModels() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           input_dim: inputDim,
@@ -87,7 +89,7 @@ function BuildModels() {
 
       const data = await response.json();
       setResult(data);
-      alert("Модель создана!!!");
+      // alert("Модель создана!!!");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -106,6 +108,9 @@ function BuildModels() {
 
       const response = await fetch("/uploadCSV", {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -116,7 +121,7 @@ function BuildModels() {
 
       const data = await response.json();
       setResult(data);
-      alert("Файл успешно загружен!");
+      // alert("Файл успешно загружен!");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -129,9 +134,9 @@ function BuildModels() {
     if (columns.inputDim) {
       setInputDim(columns.inputDim);
       setLayers([
-    { type: "Dense", units: columns.inputDim, activation: "relu" },
-    { type: "Dense", units: columns.inputDim / 2, activation: "relu" },
-  ])
+        { type: "Dense", units: columns.inputDim, activation: "relu" },
+        { type: "Dense", units: columns.inputDim / 2, activation: "relu" },
+      ])
     }
   };
 
@@ -148,9 +153,10 @@ function BuildModels() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
-          configModel:{
+          configModel: {
             input_dim: inputDim,
             layers: layers,
             compile: {
@@ -158,8 +164,8 @@ function BuildModels() {
                 type: optimizer,
                 learning_rate: learningRate,
               },
-            loss: loss,
-            metrics: metrics,
+              loss: loss,
+              metrics: metrics,
             },
           },
           params: {
@@ -223,6 +229,7 @@ function BuildModels() {
         />
       ) : (
         <LoadingAndCreatingModel
+          token={token}
           onFileLoaded={handleCsvUpload}
           file={file}
           setFile={setFile}
