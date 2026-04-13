@@ -4,4 +4,4 @@ LEARNING_RATE = 0.001
 TEST_SIZE = 0.2
 RANDOM_STATE = 42
 
-MODEL_PATH = "models/model.h5"
+MODEL_PATH = "models/model.keras"

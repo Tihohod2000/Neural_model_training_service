@@ -10,4 +10,4 @@ def scale_data(X_train, X_test, save_path="models/scaler.pkl"):
 
     joblib.dump(scaler, save_path)
 
-    return X_train, X_test
+    return X_train, X_test, scaler

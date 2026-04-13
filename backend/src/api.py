@@ -1,39 +1,187 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List, Union
+from src.saveModel import save_model
 import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers as keras_layers
 import joblib
-from src.model import build_model_from_config 
+from src.model import build_model_from_config
+from src.trainer import train_model_from_csv
 from src.schemas import *
+import os
+import pandas as pd
+import io
+import jwt
+import datetime
+from functools import wraps
 
 app = FastAPI(title="ML Prediction API")
 
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # В продакшене укажите конкретные origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# JWT конфигурация
+JWT_SECRET = "your-secret-key-change-in-production"  # Замените на безопасный ключ в продакшене
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+#Схема регитсрации
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    conf_password: str
+
+# Схема для авторизации
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+# HTTP Bearer схема
+security = HTTPBearer()
+
+# --- JWT функции ---
+
+def create_jwt_token(username: str) -> str:
+    """Создаёт JWT токен для указанного пользователя."""
+    payload = {
+        "sub": username,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRATION_HOURS),
+        "iat": datetime.datetime.utcnow()
+    }
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return token
+
+
+def verify_jwt_token(token: str) -> dict:
+    """Проверяет валидность JWT токена и возвращает payload."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Токен истёк")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Неверный токен")
+
+
+def require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    """Зависимость FastAPI для проверки авторизации через JWT."""
+    return verify_jwt_token(credentials.credentials)
+
+# Максимальный размер файла: 1 ГБ
+MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1 GB в байтах
+UPLOAD_DIR = "uploads"
+
+# Создаём директорию для загрузок, если не существует
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 model = None
 scaler = None
+VALID_USERS = {
+        "admin": "admin123",
+        "1": "1"
+    }
 
 
-
-
-
-
-@app.on_event("startup")
-async def load_model_and_scaler():
-    """Загрузка модели и скалера при старте."""
-    global model, scaler
-    model = keras.models.load_model("models/model.h5")
-    scaler = joblib.load("models/scaler.pkl")
-    print(f"Input_shape: {model.input_shape[1]}")
-    # print(model.summary())
+# @app.on_event("startup")
+# async def load_model_and_scaler():
+#     """Загрузка модели и скалера при старте."""
+#     global model, scaler
+#     try:
+#         model = keras.models.load_model("models/model.h5")
+#         scaler = joblib.load("models/scaler.pkl")
+#         print(f"Input_shape: {model.input_shape[1]}")
+#     except FileNotFoundError:
+#         print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
+#         model = None
+#         scaler = None
 
 
 @app.get("/health")
-async def health_check():
+async def health_check(user: dict = Depends(require_auth)):
     """Проверка доступности сервиса."""
     return {"status": "ok"}
 
 
+@app.post("/login", response_model=TokenResponse)
+async def login(request: LoginRequest):
+    """Аутентификация пользователя и выдача JWT токена."""
+    # TODO: Замените на реальную проверку учётных данных из БД
+
+    # print(request.username)
+    if request.username not in VALID_USERS or VALID_USERS[request.username] != request.password:
+        raise HTTPException(status_code=401, detail="Неверное имя пользователя или пароль")
+
+    token = create_jwt_token(request.username)
+    return {"access_token": token, "token_type": "bearer"}
+
+@app.post("/register")
+async def register(request: RegisterRequest):
+    if request.conf_password != request.password:
+        raise HTTPException(status_code=400, detail="Пароль не подтверждён")
+    
+    if request.username in VALID_USERS:
+        raise HTTPException(status_code=400, detail="Такой пользователь уже существует!")
+    
+    VALID_USERS[request.username] = request.password
+    return {
+        "message" : "Пользователь успешно создан",
+        "success" : True
+    }
+
+
+@app.post("/start-training")
+async def start_training(request: ModelParametersAndTrainingRequest, user: dict = Depends(require_auth)):
+    """Начать обучение модели на загруженном CSV файле."""
+    global model, scaler
+
+    try:
+        # Создание модели с правильным input_dim
+        model = build_model_from_config(request.configModel)
+
+        # Путь к CSV файлу
+        csv_path = os.path.join(UPLOAD_DIR, request.params.file_name)
+
+        if not os.path.exists(csv_path):
+            raise HTTPException(status_code=404, detail=f"Файл {request.params.file_name} не найден")
+
+        # Обучение модели
+        history, scaler = train_model_from_csv(
+            model=model,
+            csv_path=csv_path,
+            feature_columns=request.params.selectedFeatures,
+            target_column=request.params.selectedTarget
+        )
+
+        # Сохранение скалера
+        # scaler_path = os.path.join("models", "scaler.pkl")
+        # joblib.dump(scaler, scaler_path)
+
+        save_model(scaler)
+
+        return {
+            "message": "Обучение завершено",
+            "epochs_trained": len(history.history['loss']),
+            "final_loss": float(history.history['loss'][-1]),
+            "final_val_loss": float(history.history['val_loss'][-1]) if 'val_loss' in history.history else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка при обучении: {str(e)}")
 
 
 @app.post("/predict", response_model=PredictionResponse)
@@ -51,23 +199,68 @@ async def predict(request: PredictionRequest):
 
 
 @app.post("/create-model")
-async def create_model(params: ModelParameters):
-    global model
+# async def create_model(params: ModelParameters):
+#     global model
+#     try:
+#         model = build_model_from_config(params)
+
+#         return {
+#             "message": "Model created successfully",
+#             "input_dim": params.input_dim,
+#             "num_layers": len(params.layers),
+#             "total_params": model.count_params()
+#         }
+
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
+    
+@app.post("/uploadCSV")
+async def upload_csv(file: UploadFile = File(...), user: dict = Depends(require_auth)):
+    """Загрузка CSV файла на сервер (макс. 1 ГБ)."""
     try:
-        model = build_model_from_config(params)
+        # Проверка расширения файла
+        if not file.filename.endswith(".csv"):
+            raise HTTPException(
+                status_code=400,
+                detail="Неверный формат файла. Загрузите файл с расширением .csv"
+            )
+
+        # Чтение файла в память для проверки размера
+        contents = await file.read()
+        file_size = len(contents)
+
+        # Проверка размера файла
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Файл слишком большой. Максимальный размер: 1 ГБ. Размер файла: {file_size / (1024 * 1024 * 1024):.2f} ГБ"
+            )
+
+        if file_size == 0:
+            raise HTTPException(status_code=400, detail="Файл пуст")
+
+        # Сохранение файла на сервер
+        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(contents)
+
+        # Чтение заголовков CSV
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')), nrows=0)
+        headers = list(df.columns)
 
         return {
-            "message": "Model created successfully",
-            "input_dim": params.input_dim,
-            "num_layers": len(params.layers),
-            "total_params": model.count_params()
+            "message": "Файл успешно загружен",
+            "filename": file.filename,
+            "size_bytes": file_size,
+            "size_mb": round(file_size / (1024 * 1024), 2),
+            "path": file_path,
+            "headers": headers
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    
-    
-@app.post("/makemodel")
-async def makemodel():
-    return "model was made"
+        raise HTTPException(status_code=500, detail=f"Ошибка при загрузке файла: {str(e)}")
+
+
+

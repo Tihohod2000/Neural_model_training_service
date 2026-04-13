@@ -39,7 +39,23 @@ def build_model_from_config(config):
         elif layer_cfg.type == "BatchNormalization":
             model.add(layers.BatchNormalization())
 
-    optimizer = getattr(keras.optimizers, config.compile.optimizer.type)(
+    # Словарь оптимизаторов (нормализация регистра)
+    optimizer_name = config.compile.optimizer.type.lower()
+    optimizers_map = {
+        "adam": keras.optimizers.Adam,
+        "sgd": keras.optimizers.SGD,
+        "rmsprop": keras.optimizers.RMSprop,
+        "adagrad": keras.optimizers.Adagrad,
+        "adadelta": keras.optimizers.Adadelta,
+        "adamax": keras.optimizers.Adamax,
+        "nadam": keras.optimizers.Nadam,
+        "ftrl": keras.optimizers.Ftrl,
+    }
+
+    if optimizer_name not in optimizers_map:
+        raise ValueError(f"Неподдерживаемый оптимизатор: {optimizer_name}. Доступные: {list(optimizers_map.keys())}")
+
+    optimizer = optimizers_map[optimizer_name](
         learning_rate=config.compile.optimizer.learning_rate
     )
 
@@ -52,7 +68,7 @@ def build_model_from_config(config):
     return model
 
 
-def build_model(input_dim: int):
+def build_defuelt_model(input_dim: int):
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
         layers.Dense(64, activation="relu"),

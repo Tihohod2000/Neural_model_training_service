@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class OptimizerConfig(BaseModel):
@@ -15,16 +15,14 @@ class CompileConfig(BaseModel):
 
 
 class LayerConfig(BaseModel):
+    model_config = ConfigDict(extra="allow")
     type: str
     units: Optional[int] = None
     activation: Optional[str] = None
     rate: Optional[float] = None
 
 
-class ModelParameters(BaseModel):
-    input_dim: int
-    layers: list[LayerConfig]
-    compile: CompileConfig
+
 
 
 class PredictionRequest(BaseModel):
@@ -46,3 +44,19 @@ class BuildModelResponse(BaseModel):
     status: str
     input_dim: int
     layers_count: int
+
+
+class TrainingRequest(BaseModel):
+    file_name: str
+    selectedFeatures: List[str]
+    selectedTarget: str
+
+
+class ModelParameters(BaseModel):
+    input_dim: int
+    layers: list[LayerConfig]
+    compile: CompileConfig
+
+class ModelParametersAndTrainingRequest(BaseModel):
+    configModel: ModelParameters
+    params: TrainingRequest
