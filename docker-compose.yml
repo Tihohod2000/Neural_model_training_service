@@ -1,6 +1,19 @@
 version: "3.8"
 
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: ml-database
+    environment:
+      POSTGRES_USER: ml_user
+      POSTGRES_PASSWORD: ml_password
+      POSTGRES_DB: ml_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   backend:
     build: ./backend
     container_name: ml-backend
@@ -12,7 +25,10 @@ services:
       - ./backend/uploads:/app/uploads
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://ml_user:ml_password@db:5432/ml_db
     command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - db
     restart: unless-stopped
 
   frontend:
@@ -30,3 +46,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:
