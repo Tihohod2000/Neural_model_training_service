@@ -17,6 +17,8 @@ import io
 import jwt
 import datetime
 from functools import wraps
+from src.database import get_db
+from sqlalchemy import text
 
 app = FastAPI(title="ML Prediction API")
 
@@ -95,18 +97,32 @@ VALID_USERS = {
     }
 
 
-# @app.on_event("startup")
-# async def load_model_and_scaler():
-#     """Загрузка модели и скалера при старте."""
-#     global model, scaler
-#     try:
-#         model = keras.models.load_model("models/model.h5")
-#         scaler = joblib.load("models/scaler.pkl")
-#         print(f"Input_shape: {model.input_shape[1]}")
-#     except FileNotFoundError:
-#         print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
-#         model = None
-#         scaler = None
+@app.on_event("startup")
+async def load_model_and_scaler():
+    """Загрузка модели и скалера при старте + применение миграций."""
+    global model, scaler
+
+    # Применение SQL миграций
+    try:
+        db = next(get_db())
+        migration_path = os.path.join("migrations", "001_create_users.sql")
+        if os.path.exists(migration_path):
+            with open(migration_path, "r", encoding="utf-8") as f:
+                sql = f.read()
+            db.execute(text(sql))
+            db.commit()
+            print("Миграции применены успешно")
+    except Exception as e:
+        print(f"Ошибка при применении миграций: {e}")
+
+    # try:
+    #     model = keras.models.load_model("models/model.h5")
+    #     scaler = joblib.load("models/scaler.pkl")
+    #     print(f"Input_shape: {model.input_shape[1]}")
+    # except FileNotFoundError:
+    #     print("Модель и скалер не найдены. Создайте новую модель через /create-model или /start-training")
+    #     model = None
+    #     scaler = None
 
 
 @app.get("/health")
