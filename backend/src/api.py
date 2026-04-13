@@ -34,6 +34,12 @@ JWT_SECRET = "your-secret-key-change-in-production"  # Замените на б�
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24
 
+#Схема регитсрации
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    conf_password: str
+
 # Схема для авторизации
 class LoginRequest(BaseModel):
     username: str
@@ -113,7 +119,6 @@ async def health_check(user: dict = Depends(require_auth)):
 async def login(request: LoginRequest):
     """Аутентификация пользователя и выдача JWT токена."""
     # TODO: Замените на реальную проверку учётных данных из БД
-    global VALID_USERS 
 
     # print(request.username)
     if request.username not in VALID_USERS or VALID_USERS[request.username] != request.password:
@@ -121,6 +126,20 @@ async def login(request: LoginRequest):
 
     token = create_jwt_token(request.username)
     return {"access_token": token, "token_type": "bearer"}
+
+@app.post("/register")
+async def register(request: RegisterRequest):
+    if request.conf_password != request.password:
+        raise HTTPException(status_code=400, detail="Пароль не подтверждён")
+    
+    if request.username in VALID_USERS:
+        raise HTTPException(status_code=400, detail="Такой пользователь уже существует!")
+    
+    VALID_USERS[request.username] = request.password
+    return {
+        "message" : "Пользователь успешно создан",
+        "success" : True
+    }
 
 
 @app.post("/start-training")

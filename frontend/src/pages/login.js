@@ -45,8 +45,34 @@ function LoginPage() {
         localStorage.setItem("token", data.access_token);
         window.location.href = "/";
       } else {
-        // Регистрация (пока заглушка — нужно реализовать на бэке)
-        throw new Error("Регистрация пока не поддерживается");
+        // Регистрация
+        const response = await fetch(`${API_URL}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, conf_password: confirmPassword }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.detail || "Ошибка регистрации");
+        }
+
+        alert("Регистрация прошла успешно!")
+
+        // После регистрации — автоматический вход
+        const loginResponse = await fetch(`${API_URL}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!loginResponse.ok) {
+          throw new Error("Регистрация прошла успешно, но войти не удалось. Войдите вручную.");
+        }
+
+        const loginData = await loginResponse.json();
+        localStorage.setItem("token", loginData.access_token);
+        window.location.href = "/";
       }
     } catch (err) {
       setError(err.message);
